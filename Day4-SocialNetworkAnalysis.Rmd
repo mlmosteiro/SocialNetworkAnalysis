@@ -20,7 +20,7 @@ El objetivo es visualizar los datos e intentar sacar algunas conclusiones de ell
 
 Instalamos algunos paquetes que pueden tardar un rato y que usaremos para generar los gráfos
 
-```{r  results="hide"}
+```{r   warning=FALSE, message=FALSE}
 #install.packages("igraph")
 
 #install.packages("ggraph")
@@ -39,7 +39,7 @@ nodes <- read.csv("network-analysis-course/data/congress-twitter-network-nodes.c
 head(nodes)
 
 edges <- read.csv("network-analysis-course/data/congress-twitter-network-edges.csv")
-edges
+head(edges)
 ```
 Vemos que los nodos contienen información sobre el usuario de twitter de las personas, su nombre, sexo, partido, etc. 
 
@@ -69,7 +69,7 @@ setPartyColorToNodes <- function(graph) {
 twitterGraph <- setPartyColorToNodes(twitterGraph) 
 
 # Veamos algunos de los colores asignados
-V(twitterGraph)$color
+V(twitterGraph)$color[1:10]
 ```
 
 Ahora que ya hemos añadido un atributo más a los nodos con el color que les corresponde, pintemos el gráfico.
@@ -95,8 +95,8 @@ Como se trata de un dataset tan grande, elegiremos un subgrafo para poder obtene
 #Vista básica del grafo, veamos que los nodos están identificados por el nombre 
 twitterGraph
 
-# Valores que hay en el atributo followers_count
-V(twitterGraph)$followers_count
+#Algunos valores que hay en el atributo followers_count
+V(twitterGraph)$followers_count[1:10]
 
 # De la lista de nodos, filtramos a aquellos que tienen más de 100000  seguidores
 filteredNodes <- nodes %>% filter(followers_count > 100000 )
