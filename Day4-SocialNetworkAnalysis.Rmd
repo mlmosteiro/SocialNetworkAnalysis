@@ -16,8 +16,8 @@ https://github.com/griff-rees/network-analysis-course
 
 El objetivo es visualizar los datos e intentar sacar algunas conclusiones de ellos.
 
-#Preparamos el entorno
-
+## Preparamos el entorno
+ 
 Instalamos algunos paquetes que pueden tardar un rato y que usaremos para generar los gráfos
 
 ```{r   warning=FALSE, message=FALSE}
@@ -29,7 +29,6 @@ library(igraph)
 library(ggraph)
 library(tidyverse)
 ```
-
 
 Ahora cargarmos los datos tanto de los nodos como de las aristas. 
 
@@ -43,7 +42,9 @@ head(edges)
 ```
 Vemos que los nodos contienen información sobre el usuario de twitter de las personas, su nombre, sexo, partido, etc. 
 
-#Generamos el gráfico, vamos a ver los datos y a visualizarlo rapidamente con ```plot```, probablemente no veamos mucha información con esto.
+## Generamos el gráfico
+
+Vamos a ver los datos y a visualizarlo rapidamente con ```plot```, probablemente no veamos mucha información con esto.
 ```{r}
 twitterGraph <- graph_from_data_frame(d=edges, vertices=nodes, directed=FALSE)
 
@@ -83,12 +84,13 @@ ggraph(twitterGraph) +
 
 ```
 Es mucho mejor ahora, aunque aún así, hay tantos nodos que no es posible pintarlos todos evitando solapamiento. De todas formas, podemos sacar rápidamente algunas conclusiones ya.
-1. Hay tres personas que no parece que utilicen twitter, ya que no están unidas con ninguna otra. Dos del partido republicano y una del partido demócrata
-2. Las personas tienden a hablar con personas de su mismo partido político
-3. La persona del partido independiente tiene más contacto con las personas del partido republicano
+
+- Hay tres personas que no parece que utilicen twitter, ya que no están unidas con ninguna otra. Dos del partido republicano y una del partido demócrata
+- Las personas tienden a hablar con personas de su mismo partido político
+- La persona del partido independiente tiene más contacto con las personas del partido republicano
 
 
-##Trabajando con un subgrafo
+## Trabajando con un subgrafo
 
 Como se trata de un dataset tan grande, elegiremos un subgrafo para poder obtener algo más de información con estos datos . En este caso, aquellas personas que tengan más de 100 000 seguidores.
 ```{r}
@@ -121,11 +123,11 @@ ggraph(filteredGraph) +
 ```
 
 Aquí podemos ver nuevamente información muy interesante.
-1. Hay 14 personas que tienen más de 100000 seguidores en twitter
-2. De entre las personas con más de 100000 seguidores, 8 son del partido democráta, 5 del partido republicano y 1 independiente. 
-3. A simple vista parece qeu John MaCain y Bernard Sander tienen más followers que el resto de personas 
+- Hay 14 personas que tienen más de 100000 seguidores en twitter
+- De entre las personas con más de 100000 seguidores, 8 son del partido democráta, 5 del partido republicano y 1 independiente. 
+- A simple vista parece qeu John MaCain y Bernard Sander tienen más followers que el resto de personas 
 
-##Grafo dirigido
+## Grafo dirigido
 
 Ahora generemos el mismo grafo filtrado, pero dirigido, para detectar además cómo es que están conectadas estas personas
 
