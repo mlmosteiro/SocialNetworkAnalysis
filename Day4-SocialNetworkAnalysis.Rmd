@@ -1,0 +1,161 @@
+---
+title: "Day 4: (Social) Network Analysis - LAB 1"
+output: html_document
+---
+  
+  ```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Network analisis, lab 1 
+
+## Contexto
+Usaremos los datos de congress-twitter-network, propocionados en el curso SMI610 Social Analytics and Visualisation (SPRING 2020~21)  , Day 4: (Social) Network Analysis ,  por Dr Griffith Rees (@griff-rees)
+
+https://github.com/griff-rees/network-analysis-course
+
+El objetivo es visualizar los datos e intentar sacar algunas conclusiones de ellos.
+
+#Preparamos el entorno
+
+Instalamos algunos paquetes que pueden tardar un rato y que usaremos para generar los gráfos
+
+```{r  results="hide"}
+#install.packages("igraph")
+
+#install.packages("ggraph")
+
+library(igraph)
+library(ggraph)
+library(tidyverse)
+```
+
+
+Ahora cargarmos los datos tanto de los nodos como de las aristas. 
+
+```{r}
+
+nodes <- read.csv("network-analysis-course/data/congress-twitter-network-nodes.csv")
+head(nodes)
+
+edges <- read.csv("network-analysis-course/data/congress-twitter-network-edges.csv")
+edges
+```
+Vemos que los nodos contienen información sobre el usuario de twitter de las personas, su nombre, sexo, partido, etc. 
+
+#Generamos el gráfico, vamos a ver los datos y a visualizarlo rapidamente con ```plot```, probablemente no veamos mucha información con esto.
+```{r}
+twitterGraph <- graph_from_data_frame(d=edges, vertices=nodes, directed=FALSE)
+
+twitterGraph
+
+plot(twitterGraph)
+```
+
+Como era de esperar, contiene muchisimos datos y es poco (nada :P )legible. Pongámosle un poco de color segun el partido al que pertenezcan. Vamos a asignar estas instrucciones a una funcion ya que nos será util más adelante. 
+
+``` {r }
+unique(nodes$party)
+
+
+setPartyColorToNodes <- function(graph) {
+  V(graph)$color <- NA
+  V(graph)$color[V(graph)$party == "Republican"] <- "red"
+  V(graph)$color[V(graph)$party == "Democrat"] <- "blue"
+  V(graph)$color[V(graph)$party == "Independent"] <- "green"
+  return(graph)
+}
+
+twitterGraph <- setPartyColorToNodes(twitterGraph) 
+
+# Veamos algunos de los colores asignados
+V(twitterGraph)$color
+```
+
+Ahora que ya hemos añadido un atributo más a los nodos con el color que les corresponde, pintemos el gráfico.
+
+``` {r}
+ggraph(twitterGraph) +
+  geom_edge_link()  +
+  geom_node_point(size = 3, aes(colour = color)) +
+  theme_graph() +
+  theme(legend.position = "none")
+
+```
+Es mucho mejor ahora, aunque aún así, hay tantos nodos que no es posible pintarlos todos evitando solapamiento. De todas formas, podemos sacar rápidamente algunas conclusiones ya.
+1. Hay tres personas que no parece que utilicen twitter, ya que no están unidas con ninguna otra. Dos del partido republicano y una del partido demócrata
+2. Las personas tienden a hablar con personas de su mismo partido político
+3. La persona del partido independiente tiene más contacto con las personas del partido republicano
+
+
+##Trabajando con un subgrafo
+
+Como se trata de un dataset tan grande, elegiremos un subgrafo para poder obtener algo más de información con estos datos . En este caso, aquellas personas que tengan más de 100 000 seguidores.
+```{r}
+#Vista básica del grafo, veamos que los nodos están identificados por el nombre 
+twitterGraph
+
+# Valores que hay en el atributo followers_count
+V(twitterGraph)$followers_count
+
+# De la lista de nodos, filtramos a aquellos que tienen más de 100000  seguidores
+filteredNodes <- nodes %>% filter(followers_count > 100000 )
+filteredNodes
+
+# Con esta lista de nodos ya filtrados, creamos un nuevo subgrafo 
+filteredGraph <-  induced_subgraph(twitterGraph, filteredNodes$name)
+filteredGraph
+
+# Añadimos algo de color. 
+setPartyColorToNodes(filteredGraph) 
+
+#Pintamos el gráfico
+ggraph(filteredGraph) +
+  geom_edge_link()  +
+  geom_node_point(aes(colour = color, size = followers_count)) +
+  geom_node_label(aes(label = name),repel = TRUE) +
+  theme_graph() +
+  scale_edge_colour_manual(values = c("blue", "red")) +
+  theme(legend.position = "none")
+
+```
+
+Aquí podemos ver nuevamente información muy interesante.
+1. Hay 14 personas que tienen más de 100000 seguidores en twitter
+2. De entre las personas con más de 100000 seguidores, 8 son del partido democráta, 5 del partido republicano y 1 independiente. 
+3. A simple vista parece qeu John MaCain y Bernard Sander tienen más followers que el resto de personas 
+
+##Grafo dirigido
+
+Ahora generemos el mismo grafo filtrado, pero dirigido, para detectar además cómo es que están conectadas estas personas
+
+```{r}
+
+# Creamos un grafo dirigido con los nodos y aristas originales
+directedTwitterGraph <- graph_from_data_frame(d=edges, vertices=nodes, directed=TRUE)
+
+# Cramos un subgrafo dirigido a partir de los nodos que filtramos anteriormente ( >100000 seguidores)
+directedTwitterFilteredGraph <-  induced_subgraph(directedTwitterGraph, filteredNodes$name)
+
+# Añadimos algo de color. 
+setPartyColorToNodes(directedTwitterFilteredGraph) 
+
+#Pintamos el grafo, en este caso usando el layout star, donde la persona con más conexiones estará al centro. Y degradando las aristas de claro a oscuro, donde oscuro es el sentido de la arista
+ggraph(directedTwitterFilteredGraph, layout = "star") +
+  geom_edge_link( aes(alpha = ..index..)) +
+  geom_node_point(alpha = .6, aes(colour = factor(party), size = followers_count)) +
+  geom_node_label(aes(label = name), repel = TRUE)  +
+  scale_edge_alpha('Edge direction', guide = 'edge_direction') +
+  theme_graph()
+```
+Aquí podemos ver  aquellos nodos que están unidos por lineas totalmente opacas es porque las personas se siguen entre sí. Aquellos que tienen más extremos oscuros (Darrell E. Issa , Charles E. Schumer, Tim Scott, Mike Lee, ...) son los que son más seguidos por las otras personas, mientras que aquellos nodos que están unidos por los extremos más claros son quienes siguen a más personas y no son seguidas de vuelta (Kirsten E. Gillibrand, Nancy Pelosi)
+
+Podemos verificar esta información con la matriz de adyacencia:
+
+```{r}
+directedTwitterFilteredGraph[]
+```
+
+
+
+
